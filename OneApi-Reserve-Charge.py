@@ -1,57 +1,56 @@
 import datetime
-
-import requests as req
+import json
 import re
-import keyboard
 
-url = r'http://localhost:8181/mgw/oneapi/payment/'
-header = {
+import keyboard
+import requests as req
+
+url = "http://localhost:8181/mgw/oneapi/payment/"
+
+headers = {
+	"Content-Type": "application/json",
 	"username": "ts",
 	"password": "ts",
-	"Accept": "application/xml",
-	"Content-Type": "application/xml"
+	"Accept": "application/json"
 }
-bodyReserve = r'''<?xml version="1.0" encoding="UTF-8"?>
-<payment:amountReservationTransaction xmlns:payment="urn:oma:xml:rest:netapi:payment:1">
-	<endUserId>321312312312</endUserId>
-	<paymentAmount>
-		<chargingInformation>
-			<description>oneapicharging</description>
-			<amount>7</amount>
-		</chargingInformation>
-	</paymentAmount>
-	<transactionOperationStatus>Reserved</transactionOperationStatus>
-</payment:amountReservationTransaction>'''
-bodyCharge = r'''<?xml version="1.0" encoding="UTF-8"?>
-<payment:amountReservationTransaction xmlns:payment="urn:oma:xml:rest:netapi:payment:1">
-	<endUserId>321312312312</endUserId>
-	<paymentAmount>
-		<chargingInformation>
-			<description>oneapicharging</description>
-			<amount>4</amount>
-		</chargingInformation>
-	</paymentAmount>
-	<transactionOperationStatus>Charged</transactionOperationStatus>
-	<referenceCode>662466831337355500</referenceCode>
-</payment:amountReservationTransaction>'''
+
+bodyReserve = {
+	"endUserId": "38765485540",
+	"paymentAmount": {
+		"chargingInformation": {
+			"amount": "10",
+			"description": ["mteltest"]
+		}},
+	"transactionOperationStatus": "RESERVED"
+}
+
+bodyCharge = {
+	"paymentAmount": {
+		"chargingInformation": {
+			"amount": "10",
+			"description": ["mteltest"]
+		}},
+	"transactionOperationStatus": "CHARGED",
+	"referenceCode": "672825310336213121"
+}
 
 
 def doReserve():
-	res = req.post(url, data=bodyReserve, headers=header)
-	try:
-		return re.match(r'.*<referenceCode>(.*)</referenceCode>.*', res.text).group(1)
-	except AttributeError:
-		print("Error")
-		print(res.content)
-		return 0
+	res = req.post(url, json = bodyReserve, headers = headers)
+	responseJson = json.loads(res.text)
+	return responseJson['referenceCode']
 
 
 def doCharge():
-	id = doReserve()
-	tempBody = bodyCharge.replace('662466831337355500', id)
-	res = req.post(url, data=tempBody, headers=header)
-	print(f'{datetime.datetime.now()} - {res.status_code}')
-	return res.status_code
+	try:
+		for i in range(20):
+			id = doReserve()
+			bodyCharge['referenceCode'] = id
+			res = req.post(url, json = bodyCharge, headers = headers)
+			print(f'{datetime.datetime.now()} - {res.status_code}')
+		# return res.status_code
+	except:
+		print("umro neki kurac")
 
 
 keyboard.add_hotkey('ctrl+alt+c', doCharge)
