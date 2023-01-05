@@ -1,3 +1,4 @@
+import base64
 import random
 import re
 import sched
@@ -15,14 +16,14 @@ RANDOMIZE_NUMBER_PER_BATCH = False
 RANDOMIZE_NUMBER_PER_MESSAGE = False
 RANDOMIZE_NUMBER_FROM_SET = False
 
-AUTH_USER = 'ts'
-AUTH_PW = 'ts'
+AUTH_USER = '1234'
+AUTH_PW = '1234'
 
 sch = sched.scheduler(pygame.time.get_ticks, pygame.time.wait)
 
 URL = "http://localhost:8184/parlay-server/services/ReserveAmountChargingPort"
 HEADERS = {
-	'Authorization': 'Basic MTIzNDoxMjM0',
+	'Authorization': f'Basic {base64.b64encode(f"{AUTH_USER}:{AUTH_PW}".encode()).decode()}',
 	'Accept-Encoding': 'gzip,deflate',
 	'Content-Type': 'text/xml;charset=UTF-8',
 	'SOAPAction': '',
@@ -64,6 +65,9 @@ def doReserve(fromNumber):
 	reserveHeaders['SOAPAction'] = RESERVE_SOAP_ACTION
 	RESERVE_BODY = re.sub(r'to:([0-9a-zA-Z]+)</value', f'to:{fromNumber}</value', RESERVE_BODY)
 	res = requests.post(URL, data = RESERVE_BODY, headers = reserveHeaders)
+	if (res.status_code != 200):
+		print(f"Reserve got response code {res.status_code}")
+		return 0
 	id = re.findall(r'([0-9a-zA-Z]+)</result', res.text)[0]
 	print(f"Reserve got response with transaction id {id}")
 	return id
