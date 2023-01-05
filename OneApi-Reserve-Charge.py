@@ -1,20 +1,36 @@
 import datetime
 import json
-import re
+import random
+import sched
 
 import keyboard
+import pygame
+import pyperclip
 import requests as req
 
-url = "http://localhost:8181/mgw/oneapi/payment/"
+FROM_NUMBER = 38765586767
+NUMBER_SET = []
+GENERATE_N_NUMBERS = 10000
 
-headers = {
-	"Content-Type": "application/json",
-	"username": "ts",
-	"password": "ts",
-	"Accept": "application/json"
+RANDOMIZE_NUMBER_PER_BATCH = False
+RANDOMIZE_NUMBER_PER_MESSAGE = False
+RANDOMIZE_NUMBER_FROM_SET = False
+
+AUTH_USER = 'ts'
+AUTH_PW = 'ts'
+
+sch = sched.scheduler(pygame.time.get_ticks, pygame.time.wait)
+
+URL = "http://localhost:8181/mgw/oneapi/payment/"
+
+HEADERS = {
+	'Content-Type': 'application/json',
+	'username': AUTH_USER,
+	'password': AUTH_PW,
+	'Accept': 'application/json'
 }
 
-bodyReserve = {
+RESERVE_BODY = {
 	"endUserId": "38765485540",
 	"paymentAmount": {
 		"chargingInformation": {
@@ -24,7 +40,7 @@ bodyReserve = {
 	"transactionOperationStatus": "RESERVED"
 }
 
-bodyCharge = {
+CHARGE_BODY = {
 	"paymentAmount": {
 		"chargingInformation": {
 			"amount": "10",
@@ -35,24 +51,47 @@ bodyCharge = {
 }
 
 
-def doReserve():
-	res = req.post(url, json = bodyReserve, headers = headers)
+def doReserve(fromNumber):
+	RESERVE_BODY['endUserId'] = fromNumber
+	res = req.post(URL, json = RESERVE_BODY, headers = HEADERS)
 	responseJson = json.loads(res.text)
 	return responseJson['referenceCode']
 
 
-def doCharge():
-	try:
-		for i in range(20):
-			id = doReserve()
-			bodyCharge['referenceCode'] = id
-			res = req.post(url, json = bodyCharge, headers = headers)
-			print(f'{datetime.datetime.now()} - {res.status_code}')
-		# return res.status_code
-	except:
-		print("umro neki kurac")
+def doCharge(id):
+	CHARGE_BODY['referenceCode'] = id
+	res = req.post(URL, json = CHARGE_BODY, headers = HEADERS)
+	return res
 
 
-keyboard.add_hotkey('ctrl+alt+c', doCharge)
+def doTransaction(fromNumber):
+	if RANDOMIZE_NUMBER_PER_MESSAGE:
+		fromNumber = '385' + str(random.randint(1000000, 9999999))
+
+	if RANDOMIZE_NUMBER_FROM_SET:
+		while len(NUMBER_SET) < GENERATE_N_NUMBERS:
+			NUMBER_SET.append('385' + str(random.randint(1000000, 9999999)))
+		fromNumber = random.choice(NUMBER_SET)
+
+	print(f'{pygame.time.get_ticks()} - Sending message from number {fromNumber}')
+	id = doReserve(fromNumber)
+	res = doCharge(id)
+	print(f'{pygame.time.get_ticks()} - {res.status_code} - {fromNumber}\n')
+
+
+def runSchedule(messagesNo, timeStep):
+	global FROM_NUMBER
+	fromNumber = FROM_NUMBER
+
+	if RANDOMIZE_NUMBER_PER_BATCH:
+		fromNumber = '385' + str(random.randint(1000000, 9999999))
+
+	print(f'{pygame.time.get_ticks()} - Scheduling messages from number {fromNumber}')
+	pyperclip.copy(str(fromNumber))
+	for i in range(messagesNo):
+		sch.enter(i * timeStep, int(1e10) - i, doTransaction, argument = (fromNumber,))
+	sch.run()
+
+
+keyboard.add_hotkey('ctrl+alt+c', runSchedule, args = (1, 10,))
 keyboard.wait()
-# print(f'doCharge() = {doCharge()}')

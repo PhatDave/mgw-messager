@@ -15,6 +15,9 @@ RANDOMIZE_NUMBER_PER_BATCH = False
 RANDOMIZE_NUMBER_PER_MESSAGE = False
 RANDOMIZE_NUMBER_FROM_SET = False
 
+AUTH_USER = 'ts'
+AUTH_PW = 'ts'
+
 sch = sched.scheduler(pygame.time.get_ticks, pygame.time.wait)
 
 URL = "http://localhost:8184/parlay-server/services/ReserveAmountChargingPort"
@@ -88,7 +91,7 @@ def doTransaction(fromNumber):
 	print(f'{pygame.time.get_ticks()} - Sending message from number {fromNumber}')
 	id = doReserve(fromNumber)
 	res = doCharge(id)
-	print(f'{pygame.time.get_ticks()} - {res.text} - {fromNumber}\n')
+	print(f'{pygame.time.get_ticks()} - {res.status_code} - {fromNumber}\n')
 
 
 def runSchedule(messagesNo, timeStep):
