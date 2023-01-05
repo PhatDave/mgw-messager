@@ -1,4 +1,3 @@
-import datetime
 import json
 import random
 import sched
@@ -93,5 +92,5 @@ def runSchedule(messagesNo, timeStep):
 	sch.run()
 
 
-keyboard.add_hotkey('ctrl+alt+c', runSchedule, args = (1, 10,))
+keyboard.add_hotkey('ctrl+alt+o', runSchedule, args = (1, 10,))
 keyboard.wait()
