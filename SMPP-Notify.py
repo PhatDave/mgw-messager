@@ -6,33 +6,42 @@ import pygame
 import pyperclip
 import requests
 
-url = "http://localhost:7080/test/mo"
+URL = "http://localhost:7080/test/mo"
 
-fromNumber = 38765586767
-numberSet = []
-generateNRandomNumbers = 10000
-querystring = {"count": "1", "to": "11111", "text": "bss", "from": "0"}
+FROM_NUMBER = 38765586767
+NUMBER_SET = []
+GENERATE_N_NUMBERS = 10000
+QUERY_STRING = {"count": "1", "to": "11111", "text": "bss", "from": "0"}
 
-payload = ""
+RANDOMIZE_NUMBER_PER_BATCH = False
+RANDOMIZE_NUMBER_PER_MESSAGE = False
+RANDOMIZE_NUMBER_FROM_SET = False
+
 sch = sched.scheduler(pygame.time.get_ticks, pygame.time.wait)
 
 
 def sendMessage(fromNumber):
-	# fromNumber = '385' + str(random.randint(1000000, 9999999))
+	if RANDOMIZE_NUMBER_PER_MESSAGE:
+		fromNumber = '385' + str(random.randint(1000000, 9999999))
 
-	while (len(numberSet) < generateNRandomNumbers):
-		numberSet.append('385' + str(random.randint(1000000, 9999999)))
-	fromNumber = random.choice(numberSet)
+	if RANDOMIZE_NUMBER_FROM_SET:
+		while len(NUMBER_SET) < GENERATE_N_NUMBERS:
+			NUMBER_SET.append('385' + str(random.randint(1000000, 9999999)))
+		fromNumber = random.choice(NUMBER_SET)
 
 	print(f'{pygame.time.get_ticks()} - Sending message from number {fromNumber}')
-	querystring["from"] = str(fromNumber)
-	resp = requests.request("GET", url, data = payload, params = querystring)
+	QUERY_STRING["from"] = str(fromNumber)
+	resp = requests.request("GET", URL, data = "", params = QUERY_STRING)
 	print(f'{pygame.time.get_ticks()} - {resp.text} - {fromNumber}\n')
 
 
 def runSchedule(messagesNo, timeStep):
-	global fromNumber
-	# fromNumber = '385' + str(random.randint(1000000, 9999999))
+	global FROM_NUMBER
+	fromNumber = FROM_NUMBER
+
+	if RANDOMIZE_NUMBER_PER_BATCH:
+		fromNumber = '385' + str(random.randint(1000000, 9999999))
+
 	print(f'{pygame.time.get_ticks()} - Scheduling messages from number {fromNumber}')
 	pyperclip.copy(str(fromNumber))
 	for i in range(messagesNo):
@@ -41,5 +50,4 @@ def runSchedule(messagesNo, timeStep):
 
 
 keyboard.add_hotkey('ctrl+alt+m', runSchedule, args = (1, 10,))
-# keyboard.add_hotkey('ctrl+alt+m', sendMessage, args=(fromNumber,))
 keyboard.wait()
