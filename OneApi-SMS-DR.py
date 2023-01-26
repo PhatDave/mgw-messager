@@ -10,6 +10,9 @@ SENDER_ADDRESS = 'OneApi'
 AUTH_USER = 'oaob123'
 AUTH_PW = 'oaob123'
 MESSAGE = 'SNT Test DR'
+NUMBER_OF_MESSAGES = 1
+TIME_IN_MS = 10
+KEYBOARD_SHORTCUT = 'ctrl+alt+p'
 
 sch = sched.scheduler(pygame.time.get_ticks, pygame.time.wait)
 
@@ -51,5 +54,5 @@ def get_and_split_response(response):
 	return resourceUrl.rsplit('/', 1)[-1]
 
 
-keyboard.add_hotkey('ctrl+alt+o', run_schedule, args=(1, 10,))
+keyboard.add_hotkey(KEYBOARD_SHORTCUT, run_schedule, args=(NUMBER_OF_MESSAGES, TIME_IN_MS,))
 keyboard.wait()
